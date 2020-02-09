@@ -20,7 +20,7 @@ If at the end of this process the vertex representing the empty board is red, th
 ## Optimizations
 A 3x3 board has 3^9 = 19683 possible states of ❌, ⭕, or empty cells. This is small enough to trivially compute the graph of states, but we can still apply some easy optimizations.
 
-Firstly, many of those possible states are not legal game states. For example, only game states where 3 >= #❌= #⭕>= 0 or 3 >= #❌- 1 = #⭕>= 0 are valid.
+Firstly, many of those possible states are not relevant, i.e. a state that cannot be legally reached from the empty board state. For example, game states where 3 >= #❌= #⭕>= 0 or 3 >= #❌- 1 = #⭕>= 0 does not hold are invalid. Game states where both players have a three in a row are not valid.
 
 Furthermore, many states are symmetric to other states and can be considered isomorphic for our purposes. The [dihedral group](https://en.wikipedia.org/wiki/Dihedral_group) of a square has 8 members, but it isn't quite right to just divide the number of states by 8. For example, there is only one state for this position:
 ```
@@ -31,4 +31,6 @@ Furthermore, many states are symmetric to other states and can be considered iso
   |   |
 ```
 
-Accounting for symmetry (where each state reduces to the "representative" member of its symmetric group), there are only 744 states in Roman tic-tac-toe, 42 of which are a win for ❌, 21 of which are a win for ⭕, and 137 of which do not lead to a guaranteed win for either player.
+However, unlike in normal tic-tac-toe, the board is not enough to represent our game state, since after all 6 tokens have been placed the token count no longers tells us whose turn it is. State therefore must also encode the turn.
+
+Accounting for turn-tracking and symmetry (where each state reduces to the "representative" member of its symmetric group), there are only 744 states in Roman tic-tac-toe, 42 of which are a win for ❌, 21 of which are a win for ⭕, and 137 of which do not lead to a guaranteed win for either player.

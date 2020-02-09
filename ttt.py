@@ -115,7 +115,7 @@ def transitions(state):
     return {(new_board_state, not x_turn) for new_board_state in new_board_states}
 
 
-def full_graph(roots={STARTING_STATE}):
+def full_graph(root=STARTING_STATE):
     traversed = set()
     graph = dict()
 
@@ -127,7 +127,7 @@ def full_graph(roots={STARTING_STATE}):
         for child in graph[state]:
             dfs(child)
 
-    dfs(STARTING_STATE)
+    dfs(root)
     return graph
 
 

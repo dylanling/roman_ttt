@@ -1,0 +1,79 @@
+<html>
+<head>
+</head>
+<body>
+<script src="./graph.js"></script>
+<script src="./build/sigma.min.js"></script>
+<script src="./build/plugins/sigma.layout.forceAtlas2.min.js"></script>
+<script src="./build/plugins/sigma.renderers.customShapes.min.js"></script>
+<div id="container">
+    <style>
+      #graph-container {
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        position: absolute;
+      }
+    </style>
+    <div id="graph-container"></div>
+  </div>
+<script>
+
+graph.nodes.forEach(function (node) {
+    node.x = node.x_default_tree;
+    node.y = node.y_default_tree;
+    node.type = "square";
+    node.size = 20;
+    if (node.x_win) {
+        node.color = "#DC143C";
+    } else if (node.o_win) {
+        node.color = "#4169E1";
+    } else if (node.x_win_guaranteed) {
+        node.color = "#F08080";
+    } else if (node.o_win_guaranteed) {
+        node.color = "#ADD8E6";
+    } else if (node.empty_squares === 9) {
+        node.color = "#ffff00";
+    } else {
+        node.color = "#00ff00";
+    }
+});
+
+graph.edges.forEach(function(link) {
+    link.type = "arrow";
+    link.color = "#000000";
+});
+
+let s = new sigma({
+  graph: graph,
+  settings: { minArrowSize: 5 },
+  renderer: {
+        container: document.getElementById('graph-container'),
+        type: sigma.renderers.canvas,
+    },
+});
+
+// ForceAtlas2
+s.startForceAtlas2(
+    {
+        worker: false,
+        barnesHutOptimize: true,
+        barnesHutTheta: 0.5,
+    }
+);
+const delay = ms => new Promise(res => setTimeout(res, ms));
+const kill = async (s) => {
+    await delay(10000);
+
+    if (s.isForceAtlas2Running()) {
+        console.log("killing forceAtlas2Worker");
+        s.killForceAtlas2();
+    }
+};
+kill(s);
+// End ForceAtlas2
+
+</script>
+</body>
+</html>

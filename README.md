@@ -34,3 +34,11 @@ Furthermore, many states are symmetric to other states and can be considered iso
 However, unlike in normal tic-tac-toe, the board is not enough to represent our game state, since after all 6 tokens have been placed the token count no longers tells us whose turn it is. State therefore must also encode the turn.
 
 Accounting for turn-tracking and symmetry (where each state reduces to the "representative" member of its symmetric group), there are only 744 states in Roman tic-tac-toe, 42 of which are a win for ❌, 21 of which are a win for ⭕, and 137 of which do not lead to a guaranteed win for either player.
+
+
+## View Graph
+```
+❯ ./generate_graph.py <classic or roman>
+```
+
+Then open `index.html`. This defaults to a tree view. You can declutter by uncommenting the forceAtlas2 section of the graph visualization.

@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+import json
+import sys
+
 """
 A state is characterized by a board position and whether or not it is X's turn to move.
 
@@ -7,7 +10,7 @@ A state is equal to another state if the board positions are symmetrically equiv
 and if the turn is the same.
 """
 
-X, O, E = "X", "O", " "
+X, O, E = "X", "O", "E"
 EMPTY_BOARD = ((E, E, E), (E, E, E), (E, E, E))
 STARTING_STATE = (EMPTY_BOARD, True)
 WINNING_POSITIONS = {
@@ -78,7 +81,27 @@ def winner(board_state):
     return None
 
 
-def transitions(state):
+def transitions_classic(state):
+    board_state, x_turn = state
+    if winner(board_state):
+        return set()
+
+    cells = flatten(board_state)
+    token = X if x_turn else O
+    token_additions = [
+        (idx, replace(cells, idx, token))
+        for idx, value in enumerate(cells)
+        if value == E
+    ]
+    new_board_states = [new_board_state for _, new_board_state in token_additions]
+    new_board_states = set(
+        symmetry_group(unflatten(new_board_state))
+        for new_board_state in new_board_states
+    )
+    return {(new_board_state, not x_turn) for new_board_state in new_board_states}
+
+
+def transitions_roman(state):
     board_state, x_turn = state
     if winner(board_state):
         return set()
@@ -115,7 +138,7 @@ def transitions(state):
     return {(new_board_state, not x_turn) for new_board_state in new_board_states}
 
 
-def full_graph(root=STARTING_STATE):
+def full_graph(transitions, root=STARTING_STATE):
     traversed = set()
     graph = dict()
 
@@ -131,7 +154,7 @@ def full_graph(root=STARTING_STATE):
     return graph
 
 
-def is_game_draw(graph, root):
+def colors(graph, root):
     red_states = set()
     blue_states = set()
 
@@ -172,11 +195,82 @@ def is_game_draw(graph, root):
     while not done_painting:
         done_painting = paint()
 
-    return root not in red_states and root not in blue_states
+    return red_states, blue_states
 
 
-graph = full_graph()
-if is_game_draw(graph, STARTING_STATE):
-    print("Perfect play avoids a win by either player!")
-else:
-    print("A perfect player can win!")
+def state_id(state):
+    board_state, x_turn = state
+    return "".join(flatten(board_state)) + (X if x_turn else O)
+
+
+game = "classic"
+games = {"classic": transitions_classic, "roman": transitions_roman}
+if len(sys.argv) >= 2:
+    game = sys.argv[1]
+
+filename = "graph.js"
+
+graph = full_graph(games[game])
+red, blue = colors(graph, STARTING_STATE)
+
+empty_counts = {}
+for board_state, _ in graph:
+    count = flatten(board_state).count(E)
+    if count not in empty_counts:
+        empty_counts[count] = 0
+    empty_counts[count] += 1
+
+steps = {
+    empties: [x * (1 / n) for x in range(n)] for empties, n in empty_counts.items()
+}
+adjusted_steps = {
+    empties: iter(
+        [
+            (p + (1 / (2 * len(points))))
+            if len(points) % 2 == 0
+            else (p + (0.5 - points[len(points) // 2]))
+            for p in points
+        ]
+    )
+    for empties, points in steps.items()
+}
+
+nodes = [
+    {
+        "id": state_id(state),
+        "board_state": "".join(flatten(state[0])),
+        "x_turn": state[1],
+        "x_win_guaranteed": state in red,
+        "o_win_guaranteed": state in blue,
+        "x_win": winner(state[0]) == X,
+        "o_win": winner(state[0]) == O,
+        "empty_squares": state_id(state).count(E),
+        "x_default_tree": next(adjusted_steps[state_id(state).count(E)]),
+        "y_default_tree": 1 - (state_id(state).count(E) / 10.0),
+    }
+    for state in graph
+]
+edges = [
+    item
+    for sublist in [
+        [
+            {
+                "id": state_id(state) + state_id(child),
+                "source": state_id(state),
+                "target": state_id(child),
+            }
+            for child in children
+        ]
+        for state, children in graph.items()
+    ]
+    for item in sublist
+]
+data = {"nodes": nodes, "edges": edges}
+
+print(f"writing graph to {filename}")
+print(f"made {len(nodes)} nodes and {len(edges)} edges")
+
+with open(filename, "w", encoding="utf-8") as f:
+    f.write("var graph = ")
+    json.dump(data, f, indent=4)
+    f.write(";")

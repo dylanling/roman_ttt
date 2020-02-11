@@ -37,6 +37,12 @@ Accounting for turn-tracking and symmetry (where each state reduces to the "repr
 
 
 ## View Graph
+#### Get SigmaJS stuff (just dev build)
+```
+❯ wget https://github.com/jacomyal/sigma.js/releases/download/v1.2.0/build.zip && unzip build.zip && rm build.zip
+```
+
+#### Make Graph file
 ```
 ❯ ./generate_graph.py <classic or roman>
 ```
